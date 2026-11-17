@@ -112,8 +112,8 @@
       ? (V.g[0].toUpperCase() + V.g.slice(1) + " " + e(o.inc) + " in più solo perché " + V.l + " " + dg + " giorni in più. Per la legge non è un aumento: niente 1%.")
       : "Il reddito non cresce e la giornata non è pagata meglio: niente 1%.";
     var cap = o.over > 0 ? " (agevolati solo i primi " + f0(P.max) + ")" : "";
-    if (dg < 0) return "Meno giornate, ma ognuna pagata meglio. Per la legge l'aumento è di " + e(o.ab) + ", calcolato sulla paga a giornata: paga l'1%" + cap + ".";
-    if (o.days <= 0) return "Stesse giornate, ma ognuna pagata meglio: tutti i " + e(o.ab) + " in più pagano l'1%" + cap + ".";
+    if (dg < 0) return "Meno giornate ma ognuna pagata meglio. Per la legge l'aumento è di " + e(o.ab) + ", calcolato sulla paga a giornata: paga l'1%" + cap + ".";
+    if (o.days <= 0) return "Stesse giornate ma ognuna pagata meglio: tutti i " + e(o.ab) + " in più pagano l'1%" + cap + ".";
     return "Dei " + e(o.inc) + " in più, " + f0(o.days) + " vengono dai " + dg + " giorni in più e pagano l'Irpef normale. Solo " + f0(o.ab) + " vengono dalla paga più alta e pagano l'1%" + cap + ".";
   }
   /** barra divisa: reddito 2026, giorni in più, paga più alta (1%), oltre il tetto */
