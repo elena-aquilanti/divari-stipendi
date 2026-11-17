@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tre casi dell'1% – Radar QN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,700&display=swap">
+<link rel="stylesheet" href="../assets/radar.css">
+<link rel="stylesheet" href="../assets/divari.css">
+<script>if(!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)&&"IntersectionObserver" in window)document.documentElement.classList.add("rv");</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="../assets/radar.js"></script>
+<script src="../assets/divari.js"></script>
+</head>
+<body>
+<main class="radar">
+  <header>
+    <h1 class="r-title">Se guadagni di più perché lavori più giorni, l'1% non scatta</h1>
+    <p class="r-sub">Un under 30 ha guadagnato 15.000 euro nel 2026, in 200 giornate da 75 euro. Tre modi in cui il suo reddito può crescere nel 2027, e quanta Irpef risparmia con la nuova imposta dell'1%</p>
+  </header>
+  <div class="leg"><span><i style="background:var(--grey)"></i>Reddito del 2026</span><span><i style="background:var(--blue-5)"></i>In più per i giorni in più: Irpef normale</span><span><i style="background:var(--red)"></i>In più per la paga più alta: 1%</span></div>
+  <figure class="chart" id="chart" style="margin:0"></figure>
+  <p class="r-note">I tre casi sono esempi costruiti da Radar, non dati. Regola del ddl di bilancio 2027: l'1% si paga sulla differenza fra il reddito 2027 e quello 2026 ricalcolato sulle giornate del 2027, fino a 2.500 euro, per i nati dopo il 1997 con reddito fino a 28.000 euro. Il risparmio è di 22 punti (23% di Irpef contro 1%); secondo l'Upb detrazioni e bonus possono ridurlo</p>
+  <footer class="r-foot"><span>Fonte: ddl di bilancio 2027, art. 44; Ufficio parlamentare di bilancio</span><span>Elaborazione Radar – QN</span></footer>
+</main>
+
+<script>
+(function () {
+  var R = Radar, D = DV, f0 = D.f0, C = D.C, txt = D.txt;
+  Promise.all([R.loadCSV("../data/casi_uno_per_cento.csv"), R.loadCSV("../data/regole_art44.csv")]).then(function (res) {
+    var P = D.rules(res[1]), host = document.getElementById("chart");
+    var SC = res[0].map(function (r) {
+      var r26 = R.num(r["Reddito 2026"]), g26 = R.num(r["Giornate 2026"]), g27 = R.num(r["Giornate 2027"]), p27 = R.num(r["Paga giornaliera 2027"]);
+      return { t: r.Caso, why: r.Spiegazione, o: D.calc(P, r26, g26, g27 * p27, g27) };
+    });
+    var R26 = SC[0].o.r26, XMAX = Math.ceil(d3.max(SC, function (c) { return c.o.r27; }) * 1.05 / 1000) * 1000;
+    function draw(anim) {
+      var w = host.clientWidth, mob = w < 480, sw = mob ? 62 : 84, rh = mob ? 80 : 64, bh = 20;
+      var x = d3.scaleLinear([0, XMAX], [0, w - sw - 8]), h = 22 + SC.length * rh;
+      var s = D.svg(host, w, h, "Tre casi: " + SC.map(function (c) { return c.t.toLowerCase() + ", risparmio " + f0(c.o.saving) + " euro"; }).join("; ") + ".");
+      txt(s, w, 10, "Irpef risparmiata", { size: 11, fill: C.ink2, a: "end" });
+      SC.forEach(function (sc, i) {
+        var y = 22 + i * rh, o = sc.o;
+        txt(s, 0, y + 6, sc.t, { size: 13, w: 700 });
+        var end = D.segs(s, x, o, y + 16, bh, anim, i * 200);
+        if (end + 46 < w - sw) txt(s, end + 6, y + 16 + bh / 2, f0(o.r27), { size: 11.5, fill: C.ink2, halo: true });
+        var sv = o.saving, t = txt(s, w, y + 16 + bh / 2, f0(sv) + " €", { size: w < 480 ? 17 : 20, w: 700, a: "end", fill: o.agev > 0 ? C.red : C.ink2 });
+        if (anim && !D.RM && sv > 0) t.transition().delay(600 + i * 200).duration(800).tween("t", function () { var ii = d3.interpolateNumber(0, sv), n = this; return function (q) { n.textContent = f0(ii(q)) + " €"; }; });
+        txt(s, 0, y + 16 + bh + 11, sc.why, { size: 11.5, fill: C.ink2, halo: true }).call(R.wrap, w - 4, 1.25);
+      });
+      var xc = x(R26);
+      s.append("line").attr("x1", xc).attr("x2", xc).attr("y1", 18).attr("y2", h - 14).style("stroke", C.ink).style("stroke-dasharray", "2 3");
+      txt(s, xc, 10, "2026: " + f0(R26), { size: 11, w: 600, a: "middle", halo: true });
+    }
+    R.responsive(host, function (W, phase) { draw(phase === "play"); });
+    D.reveal();
+  }).catch(function (e) { document.querySelector(".radar").classList.add("in"); R.fail("#chart", e); });
+})();
+</script>
+</body>
+</html>

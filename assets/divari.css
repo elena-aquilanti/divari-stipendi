@@ -1,0 +1,85 @@
+/* Divari di stipendio – componenti aggiuntivi sopra radar.css (stessi token di colore) */
+:root { --card: #ffffff; }
+:root[data-theme="dark"] { --card: #1a1b1d; }
+
+.radar > header { margin-bottom: 18px; }
+.r-sub { max-width: 65ch; }
+.chart { width: 100%; position: relative; }
+.chart svg { display: block; overflow: visible; }
+.chart text { font-family: var(--sans); font-variant-numeric: tabular-nums; }
+.ic { width: 16px; height: 16px; flex: none; color: var(--ink-2); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* istruzioni per il lettore */
+.howto { display: flex; gap: 10px; align-items: flex-start; background: var(--card); border-radius: 4px; padding: 10px 12px; margin: 0 0 14px; font-size: 14px; line-height: 1.4; }
+.howto .ic { width: 20px; height: 20px; color: var(--red); margin-top: 1px; }
+
+/* controlli */
+.ctrl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 0 14px; }
+@media (max-width: 640px) { .ctrl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ctrl.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 560px) { .ctrl.three { grid-template-columns: 1fr 1fr; } .ctrl.three .f:first-child { grid-column: 1 / -1; } }
+.ctrl .f { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ctrl .f > span { font-size: 12px; color: var(--ink-2); }
+.ctrl select, .ctrl input[type=number] { font: inherit; font-size: 15px; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 4px; background: var(--card); color: var(--ink); width: 100%; }
+.seg { display: flex; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+.seg button { flex: 1; font: inherit; font-size: 14px; padding: 7px 6px; border: 0; background: var(--card); color: var(--ink); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--card); font-weight: 600; }
+.seg .ic { width: 15px; height: 15px; color: currentColor; vertical-align: -2px; margin-right: 4px; }
+
+/* numeri chiave */
+.kcap { font-size: 12.5px; color: var(--ink-2); margin: 14px 0 -6px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; margin-top: 12px; }
+@media (max-width: 560px) { .kpis { grid-template-columns: 1fr; } }
+.kpi { background: var(--card); padding: 10px 12px; min-width: 0; }
+.kpi .k { font-size: 12px; color: var(--ink-2); display: flex; gap: 6px; align-items: center; }
+.kpi .v { font-weight: 700; font-size: 26px; line-height: 1.1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.kpi .d { font-size: 12px; color: var(--ink-2); }
+
+/* legenda a pastiglie */
+.leg { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); margin: 0 0 12px; }
+.leg span { display: inline-flex; align-items: center; gap: 6px; }
+.leg i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+
+/* grafico 5: tre misure */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+@media (max-width: 640px) { .split { grid-template-columns: 1fr; } }
+.pane { padding: 14px; min-width: 0; background: var(--card); }
+.pane.w { border-top: 4px solid var(--blue); }
+.pane.i { background: var(--bg); border-top: 4px solid var(--grey); border-left: 1px solid var(--rule); }
+@media (max-width: 640px) { .pane.i { border-left: 0; } }
+.pane h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 15px; font-weight: 700; }
+.pane h4 .ic { width: 20px; height: 20px; color: var(--ink); }
+.pane .gate { font-size: 12.5px; color: var(--ink-2); margin: 0 0 10px; }
+.pane .gate b { color: var(--ink); }
+.pane .row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 640px) { .pane .row2 { grid-template-columns: 1fr; } }
+.m4 { background: var(--card); border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.m4 .art { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.m4 .nm { font-family: var(--serif); font-weight: 700; font-size: 19px; line-height: 1.1; }
+.m4 .what { font-size: 13px; line-height: 1.4; }
+.m4 .what b { font-weight: 700; color: var(--blue); }
+.m4 .big { font-weight: 700; font-size: 30px; line-height: 1; letter-spacing: -0.02em; color: var(--blue); font-variant-numeric: tabular-nums; }
+.m4 .u { font-size: 13px; }
+.m4 .reach { margin-top: auto; border-top: 1px dashed var(--rule); padding-top: 8px; font-size: 12.5px; color: var(--ink-2); }
+.m4 .reach b { color: var(--ink); font-weight: 700; }
+.bar { height: 8px; border-radius: 4px; background: var(--grey-5); margin-top: 6px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--blue); border-radius: 4px; width: 0; transition: width .9s cubic-bezier(.2, .7, .2, 1); }
+.bar.na { background: none; border: 1px dashed var(--grey-4); }
+.out { margin-top: 12px; font-size: 14px; line-height: 1.4; border-left: 3px solid var(--red); padding: 2px 0 2px 12px; }
+.out b { font-weight: 700; }
+
+/* grafico 7: il tuo caso */
+.you2 .say { font-size: 13.5px; line-height: 1.4; margin-top: 4px; }
+.you2 .sv { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px dashed var(--rule); margin-top: 8px; padding-top: 8px; }
+.you2 .sv span { font-size: 12.5px; color: var(--ink-2); }
+.you2 .sv b { font-weight: 700; font-size: 24px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ingresso in scena al primo scorrimento */
+html.rv .radar > * { opacity: 0; transform: translateY(14px); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1); }
+html.rv .radar.in > * { opacity: 1; transform: none; }
+html.rv .radar.in > *:nth-child(2) { transition-delay: .08s; }
+html.rv .radar.in > *:nth-child(3) { transition-delay: .16s; }
+html.rv .radar.in > *:nth-child(4) { transition-delay: .24s; }
+html.rv .radar.in > *:nth-child(n+5) { transition-delay: .32s; }
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }

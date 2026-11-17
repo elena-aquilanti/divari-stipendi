@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Precari e stabilizzazioni – Radar QN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,700&display=swap">
+<link rel="stylesheet" href="../assets/radar.css">
+<link rel="stylesheet" href="../assets/divari.css">
+<script>if(!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)&&"IntersectionObserver" in window)document.documentElement.classList.add("rv");</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="../assets/radar.js"></script>
+<script src="../assets/divari.js"></script>
+</head>
+<body>
+<main class="radar">
+  <header>
+    <h1 class="r-title">Gli incentivi per stabilizzare i precari valgono per 16.200 contratti su oltre 4 milioni</h1>
+    <p class="r-sub">La manovra 2027 esonera dai contributi l'impresa che trasforma un contratto a termine in uno stabile. La barra sono i precari del settore privato; la parte rossa, i contratti che la misura può raggiungere</p>
+  </header>
+  <figure class="chart" id="chart" style="margin:0"></figure>
+  <div class="kpis">
+    <div class="kpi" data-icon="clock"><div class="k">Precari che possono essere stabilizzati con l'esonero</div><div class="v count" id="k1" style="color:var(--red)"></div><div class="d" id="k1d"></div></div>
+    <div class="kpi" data-icon="calendar"><div class="k">Chi guadagna di più perché lavora più giorni</div><div class="v">Niente 1%</div><div class="d">la nuova imposta premia solo la paga a giornata più alta</div></div>
+    <div class="kpi" data-icon="wallet"><div class="k">Stipendio netto in più con gli esoneri</div><div class="v">Nessuno</div><div class="d">secondo l'Upb abbassano il costo per l'impresa, non alzano il netto</div></div>
+  </div>
+  <p class="r-note" id="note"></p>
+  <footer class="r-foot"><span>Fonte: Inps, Analisi della dinamica retributiva; Ufficio parlamentare di bilancio</span><span>Elaborazione Radar – QN</span></footer>
+</main>
+
+<script>
+(function () {
+  var R = Radar, D = DV, f0 = D.f0, f1 = D.f1, C = D.C, txt = D.txt;
+  D.icons();
+  R.loadCSV("../data/stabilizzazioni.csv").then(function (rows) {
+    var TOT = R.num(rows[0].Valore), STAB = R.num(rows[1].Valore), PCT = STAB / TOT * 100, host = document.getElementById("chart");
+    document.getElementById("k1").textContent = f0(STAB / TOT * 1000) + " su 1.000";
+    document.getElementById("k1d").textContent = f0(STAB) + " su " + f0(TOT) + " (nostri calcoli)";
+    document.getElementById("note").textContent = "Precari: dipendenti privati con contratto a termine, media 2024, esclusi domestici e operai agricoli. Stabilizzazioni: rapporti di lavoro previsti nel 2027 dalla relazione tecnica, per under 35 con contratti a termine avviati fra maggio e novembre 2026. La lente ingrandisce la parte rossa della barra. Quota: " + f0(STAB) + " su " + f0(TOT) + ", nostro calcolo";
+    function draw(anim) {
+      var w = host.clientWidth, mob = w < 480, A = !!(anim && !D.RM);
+      var by = 26, bh = mob ? 30 : 36, Rr = mob ? 48 : 62, cx = Rr + 2, cy = by + bh + 30 + Rr, h = cy + Rr + 8;
+      var s = D.svg(host, w, h, f0(TOT) + " precari nel settore privato: le stabilizzazioni con esonero sono " + f0(STAB) + ", lo " + f1(PCT) + "%.");
+      txt(s, 0, 10, "Precari nel settore privato, 2024", { size: 12.5, w: 700 });
+      var big = s.append("rect").attr("x", 0).attr("y", by).attr("height", bh).attr("rx", 3).style("fill", C.g4).attr("width", w);
+      var bt = txt(s, w - 10, by + bh / 2, f0(TOT), { size: mob ? 16 : 20, w: 700, a: "end", fill: C.white });
+      var sw = Math.max(2.5, w * STAB / TOT), win = 8;
+      var sl = s.append("rect").attr("x", 0).attr("y", by).attr("width", sw).attr("height", bh).style("fill", C.red);
+      var lz = s.append("g");
+      lz.append("path").attr("d", "M-2," + (by + bh + 4) + " L" + (cx - Rr) + "," + cy + " M" + (win + 2) + "," + (by + bh + 4) + " L" + (cx + Rr) + "," + cy).style("fill", "none").style("stroke", C.ink2).style("stroke-width", 1).style("stroke-dasharray", "3 3");
+      lz.append("rect").attr("x", -2).attr("y", by - 4).attr("width", win + 4).attr("height", bh + 8).attr("rx", 3).style("fill", "none").style("stroke", C.ink).style("stroke-width", 1.5);
+      var lens = lz.append("g").attr("transform", "translate(" + cx + "," + cy + ")");
+      lens.append("circle").attr("r", Rr).style("fill", C.red).style("stroke", C.ink).style("stroke-width", 2.5);
+      var zt = txt(lens, 0, -6, f0(STAB), { size: mob ? 20 : 26, w: 700, a: "middle", fill: C.white });
+      txt(lens, 0, mob ? 14 : 18, "stabilizzazioni", { size: mob ? 10.5 : 12, w: 600, a: "middle", fill: C.white });
+      var hx = cx + Rr + (mob ? 16 : 28), hs = mob ? 46 : 68, hg = s.append("g");
+      var pt = txt(hg, hx, cy - (mob ? 18 : 22), f1(PCT) + "%", { size: hs, w: 700, fill: C.red });
+      var fs = mob ? 12.5 : 15, lab = txt(hg, hx, cy + (mob ? 16 : 22), "di tutti i precari: tanti ne raggiunge l'esonero per chi stabilizza", { size: fs, w: 600 });
+      lab.call(R.wrap, Math.max(110, w - hx - 4), 1.25);
+      if (A) {
+        big.attr("width", 0).transition().duration(900).ease(d3.easeCubicOut).attr("width", w);
+        bt.style("opacity", 0).transition().delay(200).duration(700).style("opacity", 1).tween("t", function () { var i = d3.interpolateNumber(0, TOT), n = this; return function (q) { n.textContent = f0(i(q)); }; });
+        sl.style("opacity", 0).transition().delay(900).duration(300).style("opacity", 1);
+        lz.style("opacity", 0).transition().delay(1200).duration(400).style("opacity", 1);
+        lens.attr("transform", "translate(" + cx + "," + cy + ") scale(.2)").transition().delay(1200).duration(600).ease(d3.easeBackOut).attr("transform", "translate(" + cx + "," + cy + ") scale(1)");
+        zt.transition().delay(1500).duration(900).tween("t", function () { var i = d3.interpolateNumber(0, STAB), n = this; return function (q) { n.textContent = f0(i(q)); }; });
+        hg.style("opacity", 0).transition().delay(2100).duration(300).style("opacity", 1);
+        pt.transition().delay(2100).duration(1100).ease(d3.easeCubicOut).tween("t", function () { var i = d3.interpolateNumber(0, PCT), n = this; return function (q) { n.textContent = f1(i(q)) + "%"; }; });
+      }
+    }
+    R.responsive(host, function (W, phase) { draw(phase === "play"); });
+    D.reveal();
+  }).catch(function (e) { document.querySelector(".radar").classList.add("in"); R.fail("#chart", e); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le donne guadagnano meno a ogni età – Radar QN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,700&display=swap">
+<link rel="stylesheet" href="../assets/radar.css">
+<link rel="stylesheet" href="../assets/divari.css">
+<script>if(!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)&&"IntersectionObserver" in window)document.documentElement.classList.add("rv");</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="../assets/radar.js"></script>
+<script src="../assets/divari.js"></script>
+</head>
+<body>
+<main class="radar">
+  <header>
+    <h1 class="r-title">Le donne guadagnano meno a ogni età, fino a 11.609 euro l'anno</h1>
+    <p class="r-sub">Retribuzione media annua dei dipendenti privati per classe di età, donne e uomini, in euro, 2024. A 25-29 anni le donne prendono 4.096 euro meno degli uomini, a 55-59 anni la distanza arriva a 11.609 euro</p>
+  </header>
+  <div class="howto"><span data-ic="user"></span><div>Scegli sesso ed età e scrivi il tuo lordo annuo: il punto rosso sei tu. Passa sul grafico per leggere i valori di ogni età.</div></div>
+  <div class="ctrl three">
+    <div class="f"><span>Sesso</span><div class="seg" role="group" aria-label="Sesso"><button type="button" id="sxF" aria-pressed="true"><span data-ic="user"></span>Donna</button><button type="button" id="sxM" aria-pressed="false"><span data-ic="user"></span>Uomo</button></div></div>
+    <label class="f" for="age"><span>Età</span><select id="age"></select></label>
+    <label class="f" for="inc"><span>Lordo annuo, euro</span><input type="number" id="inc" min="0" max="200000" step="500" value="17500" inputmode="numeric"></label>
+  </div>
+  <figure class="chart" id="chart" style="margin:0"></figure>
+  <div class="kpis">
+    <div class="kpi" data-icon="user"><div class="k"><span id="k1k"></span></div><div class="v" id="k1v"></div><div class="d" id="k1d"></div></div>
+    <div class="kpi" data-icon="scissors"><div class="k"><span id="k2k"></span></div><div class="v" id="k2v"></div><div class="d" id="k2d"></div></div>
+    <div class="kpi" data-icon="coin"><div class="k"><span id="k3k"></span></div><div class="v" id="k3v" style="color:var(--blue)"></div><div class="d" id="k3d"></div></div>
+  </div>
+  <p class="r-note">Medie Inps per classe di età, dipendenti privati esclusi domestici e operai agricoli; la retribuzione annua dipende anche dai giorni lavorati.</p>
+  <footer class="r-foot"><span>Fonte: Inps, Osservatorio sui lavoratori dipendenti del settore privato</span><span>Elaborazione Radar – QN</span></footer>
+</main>
+
+<script>
+(function () {
+  var R = Radar, D = DV, f0 = D.f0, f1 = D.f1, C = D.C, txt = D.txt;
+  D.icons();
+  R.loadCSV("../data/eta_sesso_2024.csv").then(function (rows) {
+    var AGS = rows.map(function (r) { return r.Classe; }), LAB = rows.map(function (r) { return r.Etichetta; });
+    var M = rows.map(function (r) { return R.num(r.Uomini); }), F = rows.map(function (r) { return R.num(r.Donne); });
+    var N = AGS.length, LAST = N - 1, PEAK = d3.maxIndex(M, function (m, k) { return m - F[k]; });
+    var sex = "F", host = document.getElementById("chart"), sAge = document.getElementById("age"), iInc = document.getElementById("inc");
+    LAB.forEach(function (a, i) { var o = document.createElement("option"); o.value = i; o.textContent = a; sAge.appendChild(o); });
+    sAge.value = AGS.indexOf("25-29");
+    var bF = document.getElementById("sxF"), bM = document.getElementById("sxM");
+    function setSex(s) { sex = s; bF.setAttribute("aria-pressed", s === "F"); bM.setAttribute("aria-pressed", s === "M"); draw(false); }
+    bF.onclick = function () { setSex("F"); }; bM.onclick = function () { setSex("M"); };
+    sAge.onchange = function () { draw(false); }; iInc.oninput = function () { draw(false); };
+    var tip = R.tooltip(host), hideCursor = function () {};
+    R.dismissOutside(host, function () { tip.hide(); hideCursor(); });
+
+    function draw(anim) {
+      var A1 = anim && !D.RM, w = host.clientWidth, i = +sAge.value, inc = Math.max(0, +iInc.value || 0);
+      var h = w < 480 ? 300 : 360, m = { t: 20, r: w < 480 ? 60 : 76, b: 30, l: 46 };
+      var x = d3.scalePoint(AGS, [m.l, w - m.r]).padding(0.1), y = d3.scaleLinear([0, Math.max(40000, inc * 1.08)], [h - m.b, m.t]).nice();
+      var own = sex === "F" ? F[i] : M[i], oth = sex === "F" ? M[i] : F[i];
+      var s = D.svg(host, w, h, "Retribuzione media per età: le donne guadagnano meno degli uomini in ogni classe, con il divario più ampio a " + LAB[PEAK] + " (" + f0(M[PEAK] - F[PEAK]) + " euro). Il punto rosso è il lordo inserito, " + f0(inc) + " euro.");
+      y.ticks(5).forEach(function (t) {
+        s.append("line").attr("x1", m.l).attr("x2", w - m.r).attr("y1", y(t)).attr("y2", y(t)).style("stroke", C.rule);
+        txt(s, m.l - 8, y(t), f0(t), { fill: C.ink2, size: 11, a: "end" });
+      });
+      AGS.forEach(function (a, k) { if (w < 480 && k % 2 && k !== i) return; txt(s, x(a), h - 12, a, { fill: k === i ? C.ink : C.ink2, size: 10.5, a: "middle", w: k === i ? 700 : 400 }); });
+      s.append("line").attr("x1", x(AGS[i])).attr("x2", x(AGS[i])).attr("y1", m.t).attr("y2", h - m.b).style("stroke", C.ink2).style("stroke-dasharray", "2 3");
+      var cv = d3.curveMonotoneX;
+      s.append("path").attr("d", d3.area().x(function (d, k) { return x(AGS[k]); }).y0(function (d, k) { return y(F[k]); }).y1(function (d, k) { return y(M[k]); }).curve(cv)(AGS)).style("fill", C.b5).style("opacity", 0.75);
+      var ln = d3.line().x(function (d, k) { return x(AGS[k]); }).y(function (d) { return y(d); }).curve(cv);
+      var pM = s.append("path").attr("d", ln(M)).style("fill", "none").style("stroke", C.grey).style("stroke-width", 2.2);
+      var pF = s.append("path").attr("d", ln(F)).style("fill", "none").style("stroke", C.blue).style("stroke-width", 2.2);
+      if (A1) [pM, pF].forEach(function (p, k) {
+        var L0 = p.node().getTotalLength();
+        p.attr("stroke-dasharray", L0 + " " + L0).attr("stroke-dashoffset", L0).transition().delay(k * 150).duration(1100).ease(d3.easeCubicInOut).attr("stroke-dashoffset", 0).on("end", function () { p.attr("stroke-dasharray", null); });
+      });
+      txt(s, x(AGS[LAST]) + 8, y(M[LAST]), "Uomini", { fill: C.ink2, size: 12, w: 600 });
+      txt(s, x(AGS[LAST]) + 8, y(F[LAST]), "Donne", { fill: C.blue, size: 12, w: 600 });
+      if (Math.abs(i - PEAK) > 1) txt(s, x(AGS[PEAK]), (y(M[PEAK]) + y(F[PEAK])) / 2, "La forbice: " + f0(M[PEAK] - F[PEAK]) + " euro", { size: 11, a: "middle", w: 600, halo: true });
+      s.append("circle").attr("cx", x(AGS[i])).attr("cy", y(M[i])).attr("r", 4.5).style("fill", C.grey);
+      s.append("circle").attr("cx", x(AGS[i])).attr("cy", y(F[i])).attr("r", 4.5).style("fill", C.blue);
+      s.append("line").attr("x1", x(AGS[i])).attr("x2", x(AGS[i])).attr("y1", y(inc)).attr("y2", y(own)).style("stroke", C.red).style("stroke-width", 1.5);
+      s.append("circle").attr("cx", x(AGS[i])).attr("cy", y(inc)).attr("r", 7).style("fill", C.red).style("stroke", C.bg).style("stroke-width", 2);
+      var right = x(AGS[i]) < w * 0.62;
+      txt(s, x(AGS[i]) + (right ? 12 : -12), y(inc), "Tu, " + f0(inc) + " euro", { size: 12, w: 700, fill: C.red, a: right ? "start" : "end", halo: true });
+      // cursore per classe di età
+      var cl = s.append("line").attr("y1", m.t).attr("y2", h - m.b).style("stroke", C.ink).style("opacity", 0).style("pointer-events", "none");
+      var cm = s.append("circle").attr("r", 5).style("fill", C.grey).style("stroke", C.bg).style("stroke-width", 2).style("opacity", 0).style("pointer-events", "none");
+      var cf = s.append("circle").attr("r", 5).style("fill", C.blue).style("stroke", C.bg).style("stroke-width", 2).style("opacity", 0).style("pointer-events", "none");
+      hideCursor = function () { cl.style("opacity", 0); cm.style("opacity", 0); cf.style("opacity", 0); };
+      s.append("rect").attr("x", m.l).attr("y", m.t).attr("width", w - m.l - m.r).attr("height", h - m.t - m.b).style("fill", "transparent")
+        .on("pointermove pointerdown", function (ev) {
+          var p = d3.pointer(ev), k = d3.minIndex(AGS, function (a) { return Math.abs(x(a) - p[0]); }), xx = x(AGS[k]);
+          cl.attr("x1", xx).attr("x2", xx).style("opacity", 0.6); cm.attr("cx", xx).attr("cy", y(M[k])).style("opacity", 1); cf.attr("cx", xx).attr("cy", y(F[k])).style("opacity", 1);
+          tip.show(R.tipHTML({ title: LAB[k], rows: [["Uomini", f0(M[k]) + " euro"], ["Donne", f0(F[k]) + " euro"], ["Divario", f0(M[k] - F[k]) + " euro"]] }), xx, p[1]);
+        })
+        .on("pointerleave", function (ev) { if (ev.pointerType === "mouse") { tip.hide(); hideCursor(); } });
+      // numeri chiave
+      var sg = function (v) { return (v >= 0 ? "+" : "−") + f0(Math.abs(v)); };
+      document.getElementById("k1k").textContent = sex === "F" ? "Rispetto alle donne della tua età" : "Rispetto agli uomini della tua età";
+      D.tweenNum(document.getElementById("k1v"), inc - own, function (v) { return sg(v) + " euro"; });
+      document.getElementById("k1d").textContent = "Media della classe: " + f0(own) + " euro";
+      document.getElementById("k2k").textContent = sex === "F" ? "Rispetto agli uomini della tua età" : "Rispetto alle donne della tua età";
+      D.tweenNum(document.getElementById("k2v"), inc - oth, function (v) { return sg(v) + " euro"; });
+      document.getElementById("k2d").textContent = "Media della classe: " + f0(oth) + " euro";
+      document.getElementById("k3k").textContent = "Divario fra uomini e donne a " + (i === 0 ? "meno di 20 anni" : i === LAST ? "65 anni e più" : AGS[i] + " anni");
+      D.tweenNum(document.getElementById("k3v"), M[i] - F[i], function (v) { return f0(v) + " euro"; });
+      document.getElementById("k3d").textContent = "Le donne prendono " + f1(F[i] / M[i] * 100) + " euro ogni 100 degli uomini";
+    }
+    R.responsive(host, function (W, phase) { draw(phase === "play"); });
+    D.reveal();
+  }).catch(function (e) { document.querySelector(".radar").classList.add("in"); R.fail("#chart", e); });
+})();
+</script>
+</body>
+</html>

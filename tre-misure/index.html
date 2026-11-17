@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tre misure, poca strada – Radar QN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,700&display=swap">
+<link rel="stylesheet" href="../assets/radar.css">
+<link rel="stylesheet" href="../assets/divari.css">
+<script>if(!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)&&"IntersectionObserver" in window)document.documentElement.classList.add("rv");</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="../assets/radar.js"></script>
+<script src="../assets/divari.js"></script>
+</head>
+<body>
+<main class="radar">
+  <header>
+    <h1 class="r-title">Tre misure, poca strada</h1>
+    <p class="r-sub">Le misure del ddl di bilancio 2027 su stipendi e assunzioni: quanto valgono e quanti ne beneficiano</p>
+  </header>
+  <div class="split" id="chart">
+    <div class="pane w"><h4><span data-ic="user"></span>Al lavoratore</h4><p class="gate">Soldi in più in busta paga</p><div id="cw"></div></div>
+    <div class="pane i"><h4><span data-ic="building"></span>All'impresa</h4><p class="gate">Sconti a chi assume, <b>solo con un contratto a tempo indeterminato</b></p><div class="row2" id="ci"></div></div>
+  </div>
+  <div class="out"><b>Chi resta fuori:</b> chi resta a termine o in part-time senza essere assunto stabilmente, e chi guadagna di più solo perché lavora più giorni.</div>
+  <p class="r-note">Valgono per il solo 2027. Il ddl può cambiare in Parlamento</p>
+  <footer class="r-foot"><span>Fonte: ddl di bilancio 2027; Ufficio parlamentare di bilancio; Inps</span><span>Elaborazione Radar – QN</span></footer>
+</main>
+
+<script>
+(function () {
+  var R = Radar, D = DV;
+  D.icons();
+  R.loadCSV("../data/misure.csv").then(function (rows) {
+    function card(t) {
+      var q = R.num(t["Quota %"]);
+      return '<div class="m4"><span class="art">' + t.Articolo + '</span><div class="nm">' + t.Misura + '</div><div class="what">' + t["A chi"] +
+        '</div><div class="big count">' + t.Valore + '</div><div class="u">' + t["Unità"] + '</div><div class="reach">' + t.Copertura +
+        '<div class="bar' + (q == null ? " na" : "") + '">' + (q == null ? "" : '<i data-w="' + q + '"></i>') + "</div></div></div>";
+    }
+    document.getElementById("cw").innerHTML = rows.filter(function (r) { return r.Destinatario === "Lavoratore"; }).map(card).join("");
+    document.getElementById("ci").innerHTML = rows.filter(function (r) { return r.Destinatario === "Impresa"; }).map(card).join("");
+    function fill() { document.querySelectorAll(".bar i").forEach(function (i) { i.style.width = Math.max(+i.dataset.w, 1.2) + "%"; }); }
+    D.reveal(fill);
+    R.scheduleHeight();
+  }).catch(function (e) { document.querySelector(".radar").classList.add("in"); R.fail("#chart", e); });
+})();
+</script>
+</body>
+</html>

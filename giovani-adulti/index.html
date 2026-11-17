@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Under 30 e over 55, euro ogni 100 – Radar QN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,700&display=swap">
+<link rel="stylesheet" href="../assets/radar.css">
+<link rel="stylesheet" href="../assets/divari.css">
+<script>if(!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)&&"IntersectionObserver" in window)document.documentElement.classList.add("rv");</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="../assets/radar.js"></script>
+<script src="../assets/divari.js"></script>
+</head>
+<body>
+<main class="radar">
+  <header>
+    <h1 class="r-title">Gli under 30 prendono meno della metà degli over 55</h1>
+    <p class="r-sub">Quanto prende un under 30 ogni 100 euro di un over 55, dipendenti privati, 2014-2024. In dieci anni si sono avvicinati alla metà, senza raggiungerla. Passa su una barra per vedere l'anno</p>
+  </header>
+  <figure class="chart" id="chart" style="margin:0"></figure>
+  <p class="kcap" id="cap">I numeri del 2024</p>
+  <div class="kpis">
+    <div class="kpi" data-icon="coin"><div class="k">Quanto prende un under 30 ogni 100 euro di un over 55</div><div class="v" id="k1" style="color:var(--blue)"></div><div class="d" id="k1d"></div></div>
+    <div class="kpi" data-icon="scissors"><div class="k">Quanto prende in meno in un anno un under 30 rispetto a un over 55</div><div class="v" id="k2"></div><div class="d" id="k2d"></div></div>
+    <div class="kpi" data-icon="coin"><div class="k">Nuova imposta dell'1% sugli aumenti degli under 30 (manovra 2027)</div><div class="v count" id="k3" style="color:var(--red)"></div><div class="d" id="k3d"></div></div>
+  </div>
+  <p class="r-note">Valori nominali; nostri calcoli. "Under 30" sono i lavoratori fino a 29 anni, "over 55" quelli di 55 anni e oltre. Esclusi domestici e operai agricoli. Secondo l'Upb detrazioni e bonus possono ridurre il risparmio dell'1%</p>
+  <footer class="r-foot"><span>Fonte: Inps, Analisi della dinamica retributiva dei lavoratori dipendenti; ddl di bilancio 2027; Upb</span><span>Elaborazione Radar – QN</span></footer>
+</main>
+
+<script>
+(function () {
+  var R = Radar, D = DV, f0 = D.f0, f1 = D.f1, C = D.C, txt = D.txt;
+  D.icons();
+  Promise.all([R.loadCSV("../data/serie_2014_2024.csv"), R.loadCSV("../data/regole_art44.csv")]).then(function (res) {
+    var rows = res[0], P = D.rules(res[1]);
+    var YRS = rows.map(function (r) { return +r.Anno; }), Y29 = rows.map(function (r) { return R.num(r["Fino a 29 anni"]); }), Y55 = rows.map(function (r) { return R.num(r["55 anni e oltre"]); });
+    var N = YRS.length, LAST = N - 1, host = document.getElementById("chart");
+    var ratio = function (k) { return Y29[k] / Y55[k] * 100; }, reset = function () {};
+    R.dismissOutside(host, function () { reset(); });
+    document.getElementById("k1d").textContent = "Nel " + YRS[0] + " erano " + f1(ratio(0)) + " euro";
+    document.getElementById("k2d").textContent = "Nel " + YRS[0] + ": −" + f0(Y55[0] - Y29[0]) + " euro";
+    var gap = Y55[LAST] - Y29[LAST];
+    document.getElementById("k3").textContent = f1(P.maxSaving / gap * 100) + "%";
+    document.getElementById("k3d").textContent = "del divario: al massimo " + f0(P.maxSaving) + " euro su " + f0(gap);
+    function set(k) {
+      document.getElementById("cap").textContent = "I numeri del " + YRS[k];
+      D.tweenNum(document.getElementById("k1"), ratio(k), function (v) { return f1(v) + " euro"; });
+      D.tweenNum(document.getElementById("k2"), Y55[k] - Y29[k], function (v) { return "−" + f0(v) + " euro"; });
+    }
+    function draw(anim) {
+      var w = host.clientWidth, lw = 40, rw = w < 480 ? 8 : 56, bh = w < 480 ? 18 : 20, gp = 8, top = 26, h = top + N * (bh + gp);
+      var x = d3.scaleLinear([0, 100], [lw, w - rw]);
+      var s = D.svg(host, w, h, "Euro di un under 30 ogni 100 di un over 55: da " + f1(ratio(0)) + " nel " + YRS[0] + " a " + f1(ratio(LAST)) + " nel " + YRS[LAST] + ", sempre sotto la metà.");
+      txt(s, x(50), 10, "La metà", { size: 11.5, w: 700, a: "middle" });
+      txt(s, x(100), 10, "100 euro di un over 55", { size: 11, fill: C.ink2, a: "end" });
+      var marks = [];
+      YRS.forEach(function (yr, k) {
+        var y = top + k * (bh + gp), v = ratio(k), last = k === LAST, g = s.append("g");
+        var lab = txt(g, 0, y + bh / 2, String(yr), { size: 11.5, w: last ? 700 : 400, fill: last ? C.ink : C.ink2 });
+        g.append("rect").attr("x", x(0)).attr("y", y).attr("width", x(100) - x(0)).attr("height", bh).attr("rx", 2).style("fill", C.g5);
+        var r = g.append("rect").attr("x", x(0)).attr("y", y).attr("height", bh).attr("rx", 2).style("fill", C.blue).style("opacity", last ? 1 : 0.5).attr("width", x(v) - x(0));
+        var tv = txt(g, x(v) - 6, y + bh / 2, f1(v), { size: 11.5, w: 700, fill: C.white, a: "end" });
+        if (anim && !D.RM) {
+          r.attr("width", 0).transition().delay(k * 70).duration(700).ease(d3.easeCubicOut).attr("width", x(v) - x(0));
+          tv.attr("x", x(0) + 30).transition().delay(k * 70).duration(700).ease(d3.easeCubicOut).attr("x", x(v) - 6)
+            .tween("t", function () { var i = d3.interpolateNumber(0, v), n = this; return function (q) { n.textContent = f1(i(q)); }; });
+        }
+        g.append("rect").attr("x", 0).attr("y", y - gp / 2).attr("width", w).attr("height", bh + gp).style("fill", "transparent");
+        marks.push({ r: r, lab: lab, last: last });
+        g.on("pointerenter pointerdown", function () {
+          marks.forEach(function (o, j) { o.r.style("opacity", j === k ? 1 : 0.35); o.lab.style("font-weight", j === k ? 700 : 400).style("fill", j === k ? C.ink : C.ink2); });
+          set(k);
+        }).on("pointerleave", function () { reset(); });
+      });
+      reset = function () { marks.forEach(function (o) { o.r.style("opacity", o.last ? 1 : 0.5); o.lab.style("font-weight", o.last ? 700 : 400).style("fill", o.last ? C.ink : C.ink2); }); set(LAST); };
+      s.append("line").attr("x1", x(50)).attr("x2", x(50)).attr("y1", 18).attr("y2", h).style("stroke", C.ink).style("stroke-width", 1.2).style("stroke-dasharray", "4 3").style("pointer-events", "none");
+      set(LAST);
+    }
+    R.responsive(host, function (W, phase) { draw(phase === "play"); });
+    D.reveal();
+  }).catch(function (e) { document.querySelector(".radar").classList.add("in"); R.fail("#chart", e); });
+})();
+</script>
+</body>
+</html>

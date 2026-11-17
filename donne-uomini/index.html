@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Donne e uomini 2014-2024 – Radar QN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,700&display=swap">
+<link rel="stylesheet" href="../assets/radar.css">
+<link rel="stylesheet" href="../assets/divari.css">
+<script>if(!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)&&"IntersectionObserver" in window)document.documentElement.classList.add("rv");</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="../assets/radar.js"></script>
+<script src="../assets/divari.js"></script>
+</head>
+<body>
+<main class="radar">
+  <header>
+    <h1 class="r-title">Le donne recuperano in percentuale, ma in euro il divario è cresciuto</h1>
+    <p class="r-sub">Retribuzione media annua dei dipendenti privati, donne e uomini, in euro, 2014-2024. Da 7.757 a 8.134 euro l'anno; in proporzione invece le donne hanno recuperato poco, da 68,5 a 70,9 euro ogni 100 di un uomo. In rosso, quanto può aggiungere al massimo la nuova imposta dell'1% sugli aumenti degli under 30</p>
+  </header>
+  <figure class="chart" id="chart" style="margin:0"></figure>
+  <p class="kcap" id="cap"></p>
+  <div class="kpis">
+    <div class="kpi" data-icon="scissors"><div class="k"><span>Quanto prende in meno una donna in un anno</span></div><div class="v" id="k1"></div><div class="d" id="k1d"></div></div>
+    <div class="kpi" data-icon="coin"><div class="k"><span>Quanto prende una donna ogni 100 euro di un uomo</span></div><div class="v" id="k2" style="color:var(--blue)"></div><div class="d" id="k2d"></div></div>
+    <div class="kpi" data-icon="trend"><div class="k" id="k3k"></div><div class="v count" id="k3"></div><div class="d" id="k3d"></div></div>
+  </div>
+  <p class="r-note" id="note"></p>
+  <footer class="r-foot"><span>Fonte: Inps, Analisi della dinamica retributiva dei lavoratori dipendenti</span><span>Elaborazione Radar – QN</span></footer>
+</main>
+
+<script>
+(function () {
+  var R = Radar, D = DV, f0 = D.f0, f1 = D.f1, C = D.C, txt = D.txt;
+  D.icons();
+  Promise.all([R.loadCSV("../data/serie_2014_2024.csv"), R.loadCSV("../data/regole_art44.csv")]).then(function (res) {
+    var rows = res[0], P = D.rules(res[1]);
+    var YRS = rows.map(function (r) { return +r.Anno; }), Dn = rows.map(function (r) { return R.num(r.Donne); }), U = rows.map(function (r) { return R.num(r.Uomini); });
+    var N = YRS.length, LAST = N - 1, Y0 = YRS[0], Y1 = YRS[LAST], K20 = YRS.indexOf(2020), host = document.getElementById("chart");
+    var gap = function (k) { return U[k] - Dn[k]; }, sgn = function (v) { return (v >= 0 ? "+" : "−") + f1(Math.abs(v)) + "%"; };
+    var share = P.maxSaving / gap(LAST) * 100;
+    document.getElementById("k1d").textContent = "Nel " + Y0 + ": −" + f0(gap(0)) + " euro";
+    document.getElementById("k2d").textContent = "Nel " + Y0 + " erano " + f1(Dn[0] / U[0] * 100) + " euro";
+    document.getElementById("k3k").insertAdjacentText("beforeend", "Di quanto sono cresciuti gli stipendi dal " + Y0 + " al " + Y1);
+    document.getElementById("k3").textContent = sgn((Dn[LAST] / Dn[0] - 1) * 100);
+    document.getElementById("k3d").textContent = "per le donne, contro " + sgn((U[LAST] / U[0] - 1) * 100) + " per gli uomini";
+    document.getElementById("note").textContent = "Valori nominali. Esclusi domestici e operai agricoli. Le donne hanno in media 240 giornate retribuite, gli uomini 251 (2024). L'imposta dell'1% vale dal 2027 solo per i nati dopo il 1997: " + f0(P.maxSaving) + " euro è il risparmio massimo, il " + f1(share) + "% del divario del " + Y1 + " (nostri calcoli)";
+    function set(k) {
+      document.getElementById("cap").textContent = k === LAST ? "I numeri del " + Y1 + ". Passa sul grafico per vederli anno per anno" : "I numeri del " + YRS[k] + ". Esci dal grafico per tornare al " + Y1;
+      D.tweenNum(document.getElementById("k1"), gap(k), function (v) { return "−" + f0(v) + " euro"; });
+      D.tweenNum(document.getElementById("k2"), Dn[k] / U[k] * 100, function (v) { return f1(v) + " euro"; });
+    }
+    var reset = function () {};
+    R.dismissOutside(host, function () { reset(); });
+    function draw(anim) {
+      var w = host.clientWidth, h = w < 480 ? 280 : 330, m = { t: 16, r: w < 480 ? 60 : 76, b: 28, l: 46 };
+      var x = d3.scaleLinear([Y0, Y1], [m.l, w - m.r]), y = d3.scaleLinear([0, 30000], [h - m.b, m.t]);
+      var s = D.svg(host, w, h, "Retribuzione media di donne e uomini dal " + Y0 + " al " + Y1 + ": il divario passa da " + f0(gap(0)) + " a " + f0(gap(LAST)) + " euro l'anno.");
+      y.ticks(3).forEach(function (t) {
+        s.append("line").attr("x1", m.l).attr("x2", w - m.r).attr("y1", y(t)).attr("y2", y(t)).style("stroke", C.rule);
+        txt(s, m.l - 8, y(t), f0(t), { fill: C.ink2, size: 11, a: "end" });
+      });
+      (w < 480 ? [2014, 2019, 2024] : [2014, 2016, 2018, 2020, 2022, 2024]).forEach(function (t) { txt(s, x(t), h - 10, String(t), { fill: C.ink2, size: 11, a: "middle" }); });
+      var cv = d3.curveMonotoneX;
+      s.append("path").attr("d", d3.area().x(function (d, k) { return x(YRS[k]); }).y0(function (d, k) { return y(Dn[k]); }).y1(function (d, k) { return y(U[k]); }).curve(cv)(YRS)).style("fill", C.b5).style("opacity", 0.75);
+      var ln = d3.line().x(function (d, k) { return x(YRS[k]); }).y(function (d) { return y(d); }).curve(cv);
+      [[U, C.grey], [Dn, C.blue]].forEach(function (p) {
+        var pth = s.append("path").attr("d", ln(p[0])).style("fill", "none").style("stroke", p[1]).style("stroke-width", 2.2);
+        if (anim && !D.RM) { var L = pth.node().getTotalLength(); pth.attr("stroke-dasharray", L + " " + L).attr("stroke-dashoffset", L).transition().duration(900).ease(d3.easeCubicOut).attr("stroke-dashoffset", 0); }
+      });
+      txt(s, x(Y1) + 8, y(U[LAST]), "Uomini", { fill: C.ink2, size: 12, w: 600 });
+      txt(s, x(Y1) + 8, y(Dn[LAST]), "Donne", { fill: C.blue, size: 12, w: 600 });
+      // annotazione: pandemia
+      var px = x(2020);
+      if (w < 480) {
+        var pu = y(U[K20]);
+        s.append("circle").attr("cx", px).attr("cy", pu).attr("r", 2.5).style("fill", C.ink);
+        txt(s, px, pu - 26, "2020, pandemia", { size: 11, w: 700, a: "middle", halo: true });
+        txt(s, px, pu - 12, "calano entrambe", { size: 11, fill: C.ink2, a: "middle", halo: true });
+      } else {
+        var py = y(Dn[K20]);
+        s.append("line").attr("x1", px).attr("y1", py + 4).attr("x2", px).attr("y2", py + 34).style("stroke", C.ink).style("stroke-width", 0.75);
+        s.append("circle").attr("cx", px).attr("cy", py).attr("r", 2.5).style("fill", C.ink);
+        txt(s, px, py + 44, "2020, pandemia", { size: 11, w: 700, a: "middle", halo: true });
+        txt(s, px, py + 58, "calano entrambe", { size: 11, fill: C.ink2, a: "middle", halo: true });
+      }
+      if (w >= 480) {
+        txt(s, x(Y0) + 6, (y(U[0]) + y(Dn[0])) / 2, f0(gap(0)) + " euro", { size: 11, w: 600, halo: true });
+        txt(s, x(Y1) - 6, (y(U[LAST]) + y(Dn[LAST])) / 2, f0(gap(LAST)) + " euro", { size: 11, w: 700, a: "end", halo: true });
+      }
+      // in rosso: il massimo che può aggiungere l'1%
+      var ry = y(Dn[LAST] + P.maxSaving), rh = y(Dn[LAST]) - ry, ro = w < 480 ? 34 : 40;
+      var rr = s.append("rect").attr("x", x(Y1) - 6).attr("width", 12).attr("y", ry).attr("height", rh).attr("rx", 1).style("fill", C.red).style("stroke", C.bg).style("stroke-width", 1);
+      if (anim && !D.RM) rr.attr("y", y(Dn[LAST])).attr("height", 0).transition().delay(900).duration(500).attr("y", ry).attr("height", rh);
+      txt(s, x(Y1) - 8, y(Dn[LAST]) + ro, "Nuova imposta dell'1%", { size: 12, w: 700, fill: C.red, a: "end", halo: true });
+      txt(s, x(Y1) - 8, y(Dn[LAST]) + ro + 15, "al massimo +" + f0(P.maxSaving) + " euro", { size: 12, w: 700, fill: C.red, a: "end", halo: true });
+      txt(s, x(Y1) - 8, y(Dn[LAST]) + ro + 30, "il " + f1(share) + "% del divario", { size: 11, fill: C.ink2, a: "end", halo: true });
+      // crosshair
+      var cross = s.append("line").attr("y1", m.t).attr("y2", h - m.b).style("stroke", C.ink2).style("stroke-dasharray", "2 3").style("opacity", 0);
+      var cu = s.append("circle").attr("r", 4.5).style("fill", C.grey).style("opacity", 0), cd = s.append("circle").attr("r", 4.5).style("fill", C.blue).style("opacity", 0);
+      reset = function () { cross.style("opacity", 0); cu.style("opacity", 0); cd.style("opacity", 0); set(LAST); };
+      s.append("rect").attr("x", m.l).attr("y", m.t).attr("width", w - m.l - m.r).attr("height", h - m.t - m.b).style("fill", "transparent")
+        .on("pointermove pointerdown", function (ev) {
+          var k = Math.round(x.invert(d3.pointer(ev)[0])) - Y0; if (k < 0 || k > LAST) return;
+          cross.attr("x1", x(YRS[k])).attr("x2", x(YRS[k])).style("opacity", 1);
+          cu.attr("cx", x(YRS[k])).attr("cy", y(U[k])).style("opacity", 1); cd.attr("cx", x(YRS[k])).attr("cy", y(Dn[k])).style("opacity", 1);
+          set(k);
+        })
+        .on("pointerleave", function (ev) { if (ev.pointerType === "mouse") reset(); });
+      set(LAST);
+    }
+    R.responsive(host, function (W, phase) { draw(phase === "play"); });
+    D.reveal();
+  }).catch(function (e) { document.querySelector(".radar").classList.add("in"); R.fail("#chart", e); });
+})();
+</script>
+</body>
+</html>

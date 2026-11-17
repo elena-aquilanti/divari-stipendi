@@ -1,0 +1,4 @@
+Caso;Spiegazione;Reddito 2026;Giornate 2026;Giornate 2027;Paga giornaliera 2027
+Più giorni, stessa paga;250 giornate a 75 euro: i giorni in più non contano come aumento;15.000;200;250;75
+Stessi giorni, paga più alta;200 giornate a 85 euro: tutto l'aumento viene dalla paga;15.000;200;200;85
+Tutte e due le cose;250 giornate a 80 euro: conta solo la parte dovuta alla paga;15.000;200;250;80
